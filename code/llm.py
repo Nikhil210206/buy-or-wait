@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -35,6 +36,11 @@ PRICING = {
     "gemini-2.5-flash":     (0.30, 2.50),
     "gemini-2.5-pro":       (1.25, 10.00),
     "gemini-flash-latest":  (0.30, 2.50),
+    # Flash-tier list price; see evaluation/usage_report.md for the assumption note.
+    "gemini-3.6-flash":     (0.30, 2.50),
+    "gemini-3.5-flash":     (0.30, 2.50),
+    "gemini-3.1-pro-preview": (1.25, 10.00),
+    "gemini-3-flash-preview": (0.30, 2.50),
     "grok-4-fast":          (0.20, 0.50),
     "grok-4":               (3.00, 15.00),
 }
@@ -80,6 +86,23 @@ class LLMError(RuntimeError):
     pass
 
 
+# The Gemini free tier allows only a handful of requests per minute, and a 429
+# there is a *per-minute* quota rather than transient load -- exponential
+# backoff in seconds never clears it. Pace calls instead, and wait out a full
+# window when one does land.
+MIN_INTERVAL = float(os.environ.get("GEMINI_MIN_INTERVAL", "13"))
+RATE_LIMIT_WAIT = float(os.environ.get("GEMINI_RATE_LIMIT_WAIT", "62"))
+_last_call = 0.0
+
+
+def _throttle() -> None:
+    global _last_call
+    wait = MIN_INTERVAL - (time.time() - _last_call)
+    if wait > 0:
+        time.sleep(wait)
+    _last_call = time.time()
+
+
 def _post(url: str, payload: dict, headers: dict, timeout: int = 120) -> dict:
     body = json.dumps(payload).encode()
     req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json", **headers})
@@ -92,7 +115,13 @@ def _post(url: str, payload: dict, headers: dict, timeout: int = 120) -> dict:
             detail = e.read().decode()[:400]
             if e.code in (429, 500, 502, 503, 504):
                 last = LLMError(f"HTTP {e.code}: {detail}")
-                time.sleep(2 ** attempt * 2)
+                if e.code == 429:
+                    m = re.search(r'"retryDelay":\s*"(\d+)s"', detail)
+                    delay = float(m.group(1)) + 2 if m else RATE_LIMIT_WAIT
+                    print(f"    rate limited; waiting {delay:.0f}s", flush=True)
+                    time.sleep(delay)
+                else:
+                    time.sleep(2 ** attempt * 2)
                 continue
             raise LLMError(f"HTTP {e.code}: {detail}") from e
         except Exception as e:                       # network hiccup
@@ -134,6 +163,7 @@ def gemini(prompt: str, *, model: str, purpose: str, image: Path | None = None,
     if schema is not None:
         gen["response_mime_type"] = "application/json"
         gen["response_schema"] = schema
+    _throttle()
     t0 = time.time()
     out = _post(f"{GEMINI_BASE}/models/{model}:generateContent?key={key}",
                 {"contents": [{"parts": parts}], "generationConfig": gen}, {})

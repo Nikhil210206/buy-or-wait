@@ -14,8 +14,8 @@ import evidence  # noqa: E402
 import llm       # noqa: E402
 import loaders   # noqa: E402
 
-VISION_PREFS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-pro", "gemini-2.0-flash"]
-TEXT_PREFS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"]
+VISION_PREFS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]
+TEXT_PREFS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]
 GROK_PREFS = ["grok-4-fast", "grok-4", "grok-3"]
 
 
@@ -25,7 +25,7 @@ def main() -> int:
     ap.add_argument("--messages", action="store_true")
     ap.add_argument("--grok", action="store_true", help="second-opinion message pass via xAI")
     ap.add_argument("--refresh", action="store_true")
-    ap.add_argument("--batch", type=int, default=6)
+    ap.add_argument("--batch", type=int, default=12)
     a = ap.parse_args()
 
     llm.load_dotenv()
