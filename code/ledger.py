@@ -47,6 +47,7 @@ class Series:
     flexibility: str
     minimum_allowed_amount: float | None
     pooled: bool = False
+    stable: bool = True      # amounts barely vary -> contractual base pay
 
     def occurrences(self, start: dt.date, end: dt.date):
         d = self.last_date + dt.timedelta(days=self.cadence_days)
@@ -80,6 +81,9 @@ class Adjustments:
     salary_stop_from: dt.date | None = None
     salary_next_override: float | None = None                         # one-off change to the next salary
     series_scale: list[tuple[str, float, dt.date | None]] = field(default_factory=list)  # (category, factor, effective)
+    salary_primary_level: tuple[dt.date | None, float] | None = None   # confirmed base pay
+    salary_only_primary: bool = False      # drop unconfirmed commission/gig streams
+    new_recurring: list[tuple[str, float, dt.date, int]] = field(default_factory=list)  # (category, amount, from, cadence)
     # spending changes under evaluation
     stop_series: set[str] = field(default_factory=set)                # event_ids
     reduce_series: dict[str, float] = field(default_factory=dict)     # event_id -> new amount
@@ -89,6 +93,7 @@ class Adjustments:
             set(self.drop_events), dict(self.amend_amount), dict(self.delay_event),
             list(self.extra_flows), list(self.salary_level), self.salary_stop_from,
             self.salary_next_override, list(self.series_scale),
+            self.salary_primary_level, self.salary_only_primary, list(self.new_recurring),
             set(self.stop_series), dict(self.reduce_series),
         )
 
@@ -278,11 +283,14 @@ class Ledger:
             cad = round(st.median(gaps)) if gaps else 30
             if not (25 <= cad <= 35):
                 cad = 30
+            amounts = [self.home_amount(e) for e in c]
+            amounts = [a for a in amounts if a is not None]
+            spread = (st.pstdev(amounts) / st.mean(amounts)) if len(amounts) > 1 and st.mean(amounts) else 0.0
             out.append(Series(
                 key=f"{user_id}:salary:{last.cash_date.day}", event_id=last.event_id,
                 user_id=user_id, category="salary", description=last.description,
                 direction="credit", amount=amt, cadence_days=cad, last_date=last.cash_date,
-                flexibility="fixed", minimum_allowed_amount=None,
+                flexibility="fixed", minimum_allowed_amount=None, stable=spread < 0.02,
             ))
         return out
 
@@ -303,16 +311,19 @@ class Ledger:
             amt = self.home_amount(e, adj)
             if amt is None:
                 continue
-            if e.category == "salary" and adj.salary_next_override is not None:
-                amt = adj.salary_next_override
             if e.category == "salary" and adj.salary_stop_from and when >= adj.salary_stop_from:
                 continue
             flows.append(Flow(when, amt if e.direction == "credit" else -amt,
                               "known", e.event_id, e.category))
 
-        for s in self.series_for(user_id, as_of):
+        series = self.series_for(user_id, as_of)
+        primary = _primary_salary(series)
+
+        for s in series:
             if s.event_id in adj.stop_series:
                 continue
+            if s.category == "salary" and adj.salary_only_primary and s is not primary:
+                continue          # commission / gig income the employer has not confirmed
             amt = adj.reduce_series.get(s.event_id, s.amount)
             for d in s.occurrences(as_of + dt.timedelta(days=1), end):
                 a = amt
@@ -322,14 +333,31 @@ class Ledger:
                 if s.category == "salary":
                     if adj.salary_stop_from and d >= adj.salary_stop_from:
                         continue
+                    if adj.salary_primary_level and s is primary:
+                        eff, lvl = adj.salary_primary_level
+                        if eff is None or d >= eff:
+                            a = lvl
                     for eff, lvl in adj.salary_level:
                         if d >= eff:
                             a = lvl
                 flows.append(Flow(d, a if s.direction == "credit" else -a,
                                   "recurring", s.event_id, s.category))
 
+        for cat, amount, start, cadence in adj.new_recurring:
+            d = max(start, as_of + dt.timedelta(days=1))
+            while d <= end:
+                flows.append(Flow(d, -amount, "recurring", f"msg:{cat}", cat))
+                d += dt.timedelta(days=cadence)
+
         flows.extend(f for f in adj.extra_flows if as_of < f.date <= end)
         flows.sort(key=lambda f: (f.date, f.ref))
+
+        # A one-off change to the *next* payslip touches only the first pay event.
+        if adj.salary_next_override is not None:
+            for i, f in enumerate(flows):
+                if f.category == "salary" and f.amount > 0:
+                    flows[i] = Flow(f.date, adj.salary_next_override, f.kind, f.ref, f.category)
+                    break
         return flows
 
     def balance_path(self, user_id: str, as_of: dt.date, adj: Adjustments | None = None,
@@ -366,3 +394,11 @@ def _pool_flexibility(evs: list[Event]) -> str:
 def _pool_min(evs: list[Event]) -> float | None:
     vals = [e.minimum_allowed_amount for e in evs if e.minimum_allowed_amount is not None]
     return st.mean(vals) if vals else None
+
+
+def _primary_salary(series: list[Series]) -> Series | None:
+    """The confirmed base pay stream: prefer constant amounts, then the largest."""
+    sal = [s for s in series if s.category == "salary"]
+    if not sal:
+        return None
+    return max(sal, key=lambda s: (s.stable, s.amount))

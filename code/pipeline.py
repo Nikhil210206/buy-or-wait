@@ -1,16 +1,26 @@
 """Orchestrator: dataset + requests -> output rows."""
 from __future__ import annotations
 
+import csv
+
 from loaders import Dataset, Request
 from verify import COLUMNS
 
 
-def run(ds: Dataset, requests: list[Request]) -> list[dict]:
+def run(ds: Dataset, requests: list[Request], *, provider: str = "gemini",
+        use_evidence: bool = True) -> list[dict]:
+    import evidence as ev_mod
     from ledger import Ledger
     from solver import solve
 
-    led = Ledger(ds)
-    return [solve(ds, led, req) for req in requests]
+    ev = ev_mod.load(ds, provider) if use_evidence else None
+    led = Ledger(ds, evidence_amounts=ev.image_amounts() if ev else None)
+
+    rows = []
+    for req in requests:
+        adj = ev.adjustments_for(led, req.user_id, req.request_date) if ev else None
+        rows.append(solve(ds, led, req, adj))
+    return rows
 
 
 def baseline(ds: Dataset, requests: list[Request]) -> list[dict]:
@@ -28,7 +38,6 @@ def baseline(ds: Dataset, requests: list[Request]) -> list[dict]:
 
 
 def write_csv(path, rows: list[dict]) -> None:
-    import csv
     with open(path, "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=COLUMNS)
         w.writeheader()
