@@ -219,31 +219,71 @@ class Ledger:
                 minimum_allowed_amount=_pool_min(recent), pooled=True,
             ))
 
-        # (3) salary: anchor on the most recent confirmed or scheduled pay
-        sal = [e for e in self.ds.events_by_user.get(user_id, [])
+        # (3) income: one series per pay stream.
+        #
+        # Users can have several concurrent streams (e.g. a base salary on the
+        # 15th plus a commission on the 24th), and a stream is sometimes renamed
+        # mid-history ("Performance commission" -> "Monthly sales commission").
+        # Clustering by day-of-month separates concurrent streams and survives
+        # renames, which grouping by description does not.
+        out.extend(self._income_series(user_id, as_of))
+
+        self._series_cache[ck] = out
+        return out
+
+
+    # Descriptions that mark the end of a pay stream: the last occurrence is
+    # terminal and nothing should be projected after it.
+    TERMINAL_INCOME = ("final ", "previous employer", "last payroll")
+    # Descriptions that are not a recurring pay level even when they land in the
+    # stream: prorated stubs, bonuses and back-pay.
+    ONE_OFF_INCOME = ("prorat", "bonus", "arrears", "one-time", "windfall")
+
+    def _income_series(self, user_id: str, as_of: dt.date) -> list[Series]:
+        evs = [e for e in self.ds.events_by_user.get(user_id, [])
                if e.category == "salary" and e.direction == "credit"
                and e.status in ("settled", "scheduled") and self.raw_amount(e) is not None]
-        sal.sort(key=lambda e: e.cash_date)
-        if sal:
-            dates = [e.cash_date for e in sal]
+        if not evs:
+            return []
+        evs.sort(key=lambda e: e.cash_date)
+
+        # cluster by day-of-month (tolerance 3 days, wrapping at month end)
+        clusters: list[list[Event]] = []
+        for e in evs:
+            day = e.cash_date.day
+            for c in clusters:
+                ref = c[-1].cash_date.day
+                if min(abs(day - ref), 31 - abs(day - ref)) <= 3:
+                    c.append(e)
+                    break
+            else:
+                clusters.append([e])
+
+        out: list[Series] = []
+        for c in clusters:
+            last = c[-1]
+            desc = last.description.lower()
+            if any(t in desc for t in self.TERMINAL_INCOME):
+                continue                      # employment ended; project nothing
+            if len(c) < 2 and not (last.status == "scheduled" or "confirmed" in desc):
+                continue
+            # the recurring level is the latest occurrence that is not a stub
+            level_ev = next((e for e in reversed(c)
+                             if not any(t in e.description.lower() for t in self.ONE_OFF_INCOME)), last)
+            amt = self.home_amount(level_ev)
+            if amt is None:
+                continue
+            dates = [e.cash_date for e in c]
             gaps = [(b - a).days for a, b in zip(dates, dates[1:])]
             cad = round(st.median(gaps)) if gaps else 30
             if not (25 <= cad <= 35):
                 cad = 30
-            last = sal[-1]
-            amt = self.home_amount(last)
-            # A prorated/partial first payslip is not the recurring level.
-            if len(sal) >= 2 and "prorat" in last.description.lower():
-                amt = self.home_amount(sal[-2]) or amt
-            if amt is not None:
-                out.append(Series(
-                    key=f"{user_id}:salary", event_id=last.event_id, user_id=user_id,
-                    category="salary", description=last.description, direction="credit",
-                    amount=amt, cadence_days=cad, last_date=last.cash_date,
-                    flexibility="fixed", minimum_allowed_amount=None,
-                ))
-
-        self._series_cache[ck] = out
+            out.append(Series(
+                key=f"{user_id}:salary:{last.cash_date.day}", event_id=last.event_id,
+                user_id=user_id, category="salary", description=last.description,
+                direction="credit", amount=amt, cadence_days=cad, last_date=last.cash_date,
+                flexibility="fixed", minimum_allowed_amount=None,
+            ))
         return out
 
     # ---- projection ------------------------------------------------------------
