@@ -1,0 +1,1041 @@
+[
+ {
+  "id": "request_230",
+  "title": "Debt repayment",
+  "question": "I have EUR 3,537.60 in mind as an extra loan payment. I need to complete it by 4 October 2025. Can I clear this additional amount without putting upcoming bills at risk?",
+  "scenario": {
+   "version": 1,
+   "currency": "EUR",
+   "today": "2025-08-06",
+   "balance": 8676.76,
+   "minimum": 2000.0,
+   "recurring": [
+    {
+     "id": "event_21147",
+     "label": "Apartment rent transfer",
+     "category": "rent",
+     "direction": "out",
+     "amount": 891.0,
+     "schedule": {
+      "every": "month",
+      "day": 3
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21141",
+     "label": "Municipal utilities",
+     "category": "utilities",
+     "direction": "out",
+     "amount": 145.18,
+     "schedule": {
+      "every": "month",
+      "day": 7
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21143",
+     "label": "Family healthcare expense",
+     "category": "healthcare",
+     "direction": "out",
+     "amount": 121.48,
+     "schedule": {
+      "every": "month",
+      "day": 11
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21142",
+     "label": "Credit card repayment",
+     "category": "debt_repayment",
+     "direction": "out",
+     "amount": 381.0,
+     "schedule": {
+      "every": "month",
+      "day": 12
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21145",
+     "label": "Online backup subscription",
+     "category": "cloud_storage",
+     "direction": "out",
+     "amount": 25.0,
+     "schedule": {
+      "every": "month",
+      "day": 13
+     },
+     "flexibility": "stoppable",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21146",
+     "label": "Household shopping",
+     "category": "shopping",
+     "direction": "out",
+     "amount": 71.12,
+     "schedule": {
+      "every": "month",
+      "day": 13
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21144",
+     "label": "Dependent care payment",
+     "category": "family_support",
+     "direction": "out",
+     "amount": 259.0,
+     "schedule": {
+      "every": "month",
+      "day": 14
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21173",
+     "label": "groceries spending",
+     "category": "groceries",
+     "direction": "out",
+     "amount": 99.85423076923077,
+     "schedule": {
+      "every": 7,
+      "next": "2025-08-12"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21186",
+     "label": "transport spending",
+     "category": "transport",
+     "direction": "out",
+     "amount": 65.48230769230769,
+     "schedule": {
+      "every": 14,
+      "next": "2025-08-13"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21139",
+     "label": "Primary household salary",
+     "category": "salary",
+     "direction": "in",
+     "amount": 1752.74,
+     "schedule": {
+      "every": "month",
+      "day": 15
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_21131",
+     "label": "Second household income",
+     "category": "salary",
+     "direction": "in",
+     "amount": 1250.57,
+     "schedule": {
+      "every": "month",
+      "day": 20
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    }
+   ],
+   "oneOffs": [],
+   "request": {
+    "label": "Debt repayment",
+    "amount": 3537.6,
+    "deadline": "2025-10-04",
+    "allowsPartial": false
+   },
+   "methods": {
+    "full": true,
+    "installments": false,
+    "partial": true
+   },
+   "maxInstallments": null,
+   "fullAvailableToday": true,
+   "offers": [
+    {
+     "id": "payment_option_663",
+     "count": 15,
+     "amount": 259.42,
+     "first": "2025-08-09",
+     "every": 30,
+     "fee": 353.7,
+     "total": 3891.3
+    },
+    {
+     "id": "payment_option_664",
+     "count": 6,
+     "amount": 636.77,
+     "first": "2025-08-13",
+     "every": 31,
+     "fee": 283.02,
+     "total": 3820.62
+    },
+    {
+     "id": "payment_option_665",
+     "count": 24,
+     "amount": 179.83,
+     "first": "2025-08-20",
+     "every": 28,
+     "fee": 778.32,
+     "total": 4315.92
+    }
+   ],
+   "adjustments": [
+    {
+     "id": "adj-level",
+     "kind": "salary_set_level",
+     "amount": 2827.0,
+     "from": null,
+     "targetId": "event_21139",
+     "quote": "The remaining confirmed monthly salary is EUR 2827"
+    }
+   ]
+  }
+ },
+ {
+  "id": "request_118",
+  "title": "Housing",
+  "question": "I've been asked to pay EUR 738.10 as the rental deposit. I need to complete it by 8 February 2025. Would paying the full deposit leave enough for my other commitments?",
+  "scenario": {
+   "version": 1,
+   "currency": "EUR",
+   "today": "2024-12-07",
+   "balance": 1538.51,
+   "minimum": 600.0,
+   "recurring": [
+    {
+     "id": "event_10915",
+     "label": "Monthly rent",
+     "category": "rent",
+     "direction": "out",
+     "amount": 234.3,
+     "schedule": {
+      "every": "month",
+      "day": 3
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_10910",
+     "label": "Electricity bill",
+     "category": "utilities",
+     "direction": "out",
+     "amount": 47.9,
+     "schedule": {
+      "every": "month",
+      "day": 7
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_10912",
+     "label": "Streaming subscription",
+     "category": "streaming",
+     "direction": "out",
+     "amount": 22.0,
+     "schedule": {
+      "every": "month",
+      "day": 10
+     },
+     "flexibility": "reducible_or_stoppable",
+     "minAmount": 11.0,
+     "confirmed": true
+    },
+    {
+     "id": "event_10911",
+     "label": "Education loan instalment",
+     "category": "debt_repayment",
+     "direction": "out",
+     "amount": 110.0,
+     "schedule": {
+      "every": "month",
+      "day": 12
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_10913",
+     "label": "Shared storage plan",
+     "category": "cloud_storage",
+     "direction": "out",
+     "amount": 3.0,
+     "schedule": {
+      "every": "month",
+      "day": 13
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_10914",
+     "label": "Monthly shopping spend",
+     "category": "shopping",
+     "direction": "out",
+     "amount": 37.49,
+     "schedule": {
+      "every": "month",
+      "day": 13
+     },
+     "flexibility": "reducible",
+     "minAmount": 14.0,
+     "confirmed": true
+    },
+    {
+     "id": "event_10941",
+     "label": "groceries spending",
+     "category": "groceries",
+     "direction": "out",
+     "amount": 30.676153846153845,
+     "schedule": {
+      "every": 7,
+      "next": "2024-12-13"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_10966",
+     "label": "transport spending",
+     "category": "transport",
+     "direction": "out",
+     "amount": 18.9232,
+     "schedule": {
+      "every": 7,
+      "next": "2024-12-14"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_10979",
+     "label": "dining spending",
+     "category": "dining",
+     "direction": "out",
+     "amount": 20.678461538461537,
+     "schedule": {
+      "every": 14,
+      "next": "2024-12-15"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_10907",
+     "label": "Payroll credit",
+     "category": "salary",
+     "direction": "in",
+     "amount": 759.0,
+     "schedule": {
+      "every": "month",
+      "day": 15
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    }
+   ],
+   "oneOffs": [],
+   "request": {
+    "label": "Housing",
+    "amount": 738.1,
+    "deadline": "2025-02-08",
+    "allowsPartial": false
+   },
+   "methods": {
+    "full": false,
+    "installments": true,
+    "partial": true
+   },
+   "maxInstallments": 9,
+   "fullAvailableToday": true,
+   "offers": [
+    {
+     "id": "payment_option_334",
+     "count": 3,
+     "amount": 255.87,
+     "first": "2024-12-07",
+     "every": 31,
+     "fee": 29.51,
+     "total": 767.61
+    },
+    {
+     "id": "payment_option_336",
+     "count": 21,
+     "amount": 41.47,
+     "first": "2024-12-10",
+     "every": 28,
+     "fee": 132.77,
+     "total": 870.87
+    }
+   ],
+   "adjustments": [
+    {
+     "id": "adj-level",
+     "kind": "salary_set_level",
+     "amount": 759.0,
+     "from": null,
+     "targetId": "event_10907",
+     "quote": "Your regular salary for the next payroll is EUR 759."
+    }
+   ]
+  }
+ },
+ {
+  "id": "request_119",
+  "title": "Education",
+  "question": "Would paying the course fee now leave enough for my regular commitments? I need to decide by 17 July 2025. Enrolment for the course comes to INR 203,500.",
+  "scenario": {
+   "version": 1,
+   "currency": "INR",
+   "today": "2025-05-04",
+   "balance": 282101.01,
+   "minimum": 151200.0,
+   "recurring": [
+    {
+     "id": "event_11011",
+     "label": "Property maintenance contribution",
+     "category": "housing",
+     "direction": "out",
+     "amount": 17050.0,
+     "schedule": {
+      "every": "month",
+      "day": 5
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11012",
+     "label": "Electricity and water bill",
+     "category": "utilities",
+     "direction": "out",
+     "amount": 12508.3,
+     "schedule": {
+      "every": "month",
+      "day": 8
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11013",
+     "label": "Vehicle insurance premium",
+     "category": "insurance",
+     "direction": "out",
+     "amount": 7590.0,
+     "schedule": {
+      "every": "month",
+      "day": 9
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11014",
+     "label": "Course tuition",
+     "category": "education",
+     "direction": "out",
+     "amount": 14850.0,
+     "schedule": {
+      "every": "month",
+      "day": 10
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11015",
+     "label": "Therapy appointment",
+     "category": "healthcare",
+     "direction": "out",
+     "amount": 7475.93,
+     "schedule": {
+      "every": "month",
+      "day": 12
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11017",
+     "label": "Cloud storage plan",
+     "category": "cloud_storage",
+     "direction": "out",
+     "amount": 1280.0,
+     "schedule": {
+      "every": "month",
+      "day": 14
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11016",
+     "label": "Weekend entertainment",
+     "category": "entertainment",
+     "direction": "out",
+     "amount": 4860.59,
+     "schedule": {
+      "every": "month",
+      "day": 16
+     },
+     "flexibility": "reducible",
+     "minAmount": 2655.0,
+     "confirmed": true
+    },
+    {
+     "id": "event_11057",
+     "label": "dining spending",
+     "category": "dining",
+     "direction": "out",
+     "amount": 4898.395555555556,
+     "schedule": {
+      "every": 21,
+      "next": "2025-05-15"
+     },
+     "flexibility": "reducible",
+     "minAmount": 2370.0,
+     "confirmed": true
+    },
+    {
+     "id": "event_11035",
+     "label": "groceries spending",
+     "category": "groceries",
+     "direction": "out",
+     "amount": 7544.562222222222,
+     "schedule": {
+      "every": 10,
+      "next": "2025-05-09"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11048",
+     "label": "transport spending",
+     "category": "transport",
+     "direction": "out",
+     "amount": 3515.626153846154,
+     "schedule": {
+      "every": 14,
+      "next": "2025-05-12"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11010",
+     "label": "Payroll after returning from leave",
+     "category": "salary",
+     "direction": "in",
+     "amount": 176000.0,
+     "schedule": {
+      "every": "month",
+      "day": 15
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    }
+   ],
+   "oneOffs": [],
+   "request": {
+    "label": "Education",
+    "amount": 203500.0,
+    "deadline": "2025-07-17",
+    "allowsPartial": false
+   },
+   "methods": {
+    "full": false,
+    "installments": true,
+    "partial": true
+   },
+   "maxInstallments": 3,
+   "fullAvailableToday": true,
+   "offers": [
+    {
+     "id": "payment_option_337",
+     "count": 3,
+     "amount": 70546.67,
+     "first": "2025-05-18",
+     "every": 28,
+     "fee": 8140.01,
+     "total": 211640.01
+    },
+    {
+     "id": "payment_option_339",
+     "count": 15,
+     "amount": 14923.33,
+     "first": "2025-05-11",
+     "every": 30,
+     "fee": 20349.95,
+     "total": 223849.95
+    }
+   ],
+   "adjustments": [
+    {
+     "id": "adj-level",
+     "kind": "salary_set_level",
+     "amount": 176000.0,
+     "from": "2025-05-15",
+     "targetId": "event_11010",
+     "quote": "Regular salary of INR 176000 resumes on 2025-05-15."
+    }
+   ]
+  }
+ },
+ {
+  "id": "request_130",
+  "title": "Family transfer",
+  "question": "The amount I want to send is USD 1,978.80. I need to complete it by 15 February 2025. How much can I safely send to my family today?",
+  "scenario": {
+   "version": 1,
+   "currency": "USD",
+   "today": "2024-12-06",
+   "balance": 2317.46,
+   "minimum": 1400.0,
+   "recurring": [
+    {
+     "id": "event_11961",
+     "label": "Residential rent payment",
+     "category": "rent",
+     "direction": "out",
+     "amount": 600.0,
+     "schedule": {
+      "every": "month",
+      "day": 3
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11956",
+     "label": "Municipal utilities",
+     "category": "utilities",
+     "direction": "out",
+     "amount": 131.15,
+     "schedule": {
+      "every": "month",
+      "day": 7
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11959",
+     "label": "Community fitness plan",
+     "category": "gym",
+     "direction": "out",
+     "amount": 63.0,
+     "schedule": {
+      "every": "month",
+      "day": 11
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11957",
+     "label": "Music service subscription",
+     "category": "music_subscription",
+     "direction": "out",
+     "amount": 27.0,
+     "schedule": {
+      "every": "month",
+      "day": 12
+     },
+     "flexibility": "stoppable",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11958",
+     "label": "Food delivery membership",
+     "category": "delivery_membership",
+     "direction": "out",
+     "amount": 33.0,
+     "schedule": {
+      "every": "month",
+      "day": 14
+     },
+     "flexibility": "stoppable",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11960",
+     "label": "Games and recreation",
+     "category": "entertainment",
+     "direction": "out",
+     "amount": 67.24,
+     "schedule": {
+      "every": "month",
+      "day": 15
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_11987",
+     "label": "groceries spending",
+     "category": "groceries",
+     "direction": "out",
+     "amount": 85.61730769230769,
+     "schedule": {
+      "every": 7,
+      "next": "2024-12-12"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_12012",
+     "label": "transport spending",
+     "category": "transport",
+     "direction": "out",
+     "amount": 63.7092,
+     "schedule": {
+      "every": 7,
+      "next": "2024-12-13"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_12025",
+     "label": "dining spending",
+     "category": "dining",
+     "direction": "out",
+     "amount": 80.22384615384615,
+     "schedule": {
+      "every": 14,
+      "next": "2024-12-14"
+     },
+     "flexibility": "reducible",
+     "minAmount": 40.5,
+     "confirmed": true
+    },
+    {
+     "id": "event_11954",
+     "label": "Payroll credit",
+     "category": "salary",
+     "direction": "in",
+     "amount": 2177.28,
+     "schedule": {
+      "every": "month",
+      "day": 15
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    }
+   ],
+   "oneOffs": [],
+   "request": {
+    "label": "Family transfer",
+    "amount": 1978.8,
+    "deadline": "2025-02-15",
+    "allowsPartial": false
+   },
+   "methods": {
+    "full": true,
+    "installments": true,
+    "partial": true
+   },
+   "maxInstallments": 2,
+   "fullAvailableToday": true,
+   "offers": [
+    {
+     "id": "payment_option_370",
+     "count": 21,
+     "amount": 111.19,
+     "first": "2024-12-09",
+     "every": 28,
+     "fee": 356.19,
+     "total": 2334.99
+    },
+    {
+     "id": "payment_option_371",
+     "count": 24,
+     "amount": 100.59,
+     "first": "2024-12-20",
+     "every": 31,
+     "fee": 435.36,
+     "total": 2414.16
+    }
+   ],
+   "adjustments": [
+    {
+     "id": "adj-next",
+     "kind": "salary_next_only",
+     "amount": 2177.28,
+     "quote": "Your temporary monthly pay is USD 2177.28"
+    }
+   ]
+  }
+ },
+ {
+  "id": "request_176",
+  "title": "Travel",
+  "question": "The family trip will cost EUR 1,239.70. Does paying for the trip now leave enough for the rest of the month?",
+  "scenario": {
+   "version": 1,
+   "currency": "EUR",
+   "today": "2025-02-03",
+   "balance": 1286.95,
+   "minimum": 600.0,
+   "recurring": [
+    {
+     "id": "event_16158",
+     "label": "Residential rent payment",
+     "category": "rent",
+     "direction": "out",
+     "amount": 258.5,
+     "schedule": {
+      "every": "month",
+      "day": 1
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16152",
+     "label": "Municipal utilities",
+     "category": "utilities",
+     "direction": "out",
+     "amount": 63.28,
+     "schedule": {
+      "every": "month",
+      "day": 5
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16154",
+     "label": "Clinic payment",
+     "category": "healthcare",
+     "direction": "out",
+     "amount": 22.84,
+     "schedule": {
+      "every": "month",
+      "day": 9
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16153",
+     "label": "Loan repayment",
+     "category": "debt_repayment",
+     "direction": "out",
+     "amount": 45.0,
+     "schedule": {
+      "every": "month",
+      "day": 10
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16156",
+     "label": "Shared storage plan",
+     "category": "cloud_storage",
+     "direction": "out",
+     "amount": 5.0,
+     "schedule": {
+      "every": "month",
+      "day": 11
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16157",
+     "label": "Personal shopping",
+     "category": "shopping",
+     "direction": "out",
+     "amount": 31.88,
+     "schedule": {
+      "every": "month",
+      "day": 11
+     },
+     "flexibility": "reducible",
+     "minAmount": 11.6,
+     "confirmed": true
+    },
+    {
+     "id": "event_16155",
+     "label": "Parent support transfer",
+     "category": "family_support",
+     "direction": "out",
+     "amount": 57.0,
+     "schedule": {
+      "every": "month",
+      "day": 12
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16184",
+     "label": "groceries spending",
+     "category": "groceries",
+     "direction": "out",
+     "amount": 38.62692307692308,
+     "schedule": {
+      "every": 7,
+      "next": "2025-02-07"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16197",
+     "label": "transport spending",
+     "category": "transport",
+     "direction": "out",
+     "amount": 22.793846153846154,
+     "schedule": {
+      "every": 14,
+      "next": "2025-02-08"
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16149",
+     "label": "Base salary",
+     "category": "salary",
+     "direction": "in",
+     "amount": 508.2,
+     "schedule": {
+      "every": "month",
+      "day": 15
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": true
+    },
+    {
+     "id": "event_16150",
+     "label": "Account commission payment",
+     "category": "salary",
+     "direction": "in",
+     "amount": 379.12,
+     "schedule": {
+      "every": "month",
+      "day": 24
+     },
+     "flexibility": "fixed",
+     "minAmount": null,
+     "confirmed": false
+    }
+   ],
+   "oneOffs": [],
+   "request": {
+    "label": "Travel",
+    "amount": 1239.7,
+    "deadline": "2025-02-27",
+    "allowsPartial": false
+   },
+   "methods": {
+    "full": true,
+    "installments": true,
+    "partial": true
+   },
+   "maxInstallments": 12,
+   "fullAvailableToday": true,
+   "offers": [
+    {
+     "id": "payment_option_501",
+     "count": 15,
+     "amount": 90.91,
+     "first": "2025-02-17",
+     "every": 30,
+     "fee": 123.95,
+     "total": 1363.65
+    },
+    {
+     "id": "payment_option_502",
+     "count": 24,
+     "amount": 63.02,
+     "first": "2025-02-06",
+     "every": 28,
+     "fee": 272.78,
+     "total": 1512.48
+    }
+   ],
+   "adjustments": [
+    {
+     "id": "adj-level",
+     "kind": "salary_set_level",
+     "amount": 847.0,
+     "from": null,
+     "targetId": "event_16149",
+     "quote": "Your confirmed base salary is EUR 847"
+    }
+   ]
+  }
+ }
+]

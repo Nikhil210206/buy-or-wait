@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="rampA" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="760" y2="420" spreadMethod="repeat">
+      <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+    <linearGradient id="rampB" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="190" y2="-260" spreadMethod="repeat">
+      <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+
+    <filter id="clouds" filterUnits="userSpaceOnUse" x="0" y="0" width="1600" height="1000">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0014 0.0022" numOctaves="4" seed="11"/>
+      <feColorMatrix values="0 0 0 0 0.55  0 0 0 0 0.54  0 0 0 0 0.52  0.5 0 0 0 -0.2"/>
+    </filter>
+
+    <filter id="haze" filterUnits="userSpaceOnUse" x="-300" y="-300" width="2200" height="1600">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0019" numOctaves="4" seed="8" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="420" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feColorMatrix in="d" values="0 0 0 0 0.5  0 0 0 0 0.49  0 0 0 0 0.47  1 0 0 0 0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0.04 0.14 0.22 0.14 0.04 0 0 0 0"/></feComponentTransfer>
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+
+    <filter id="major" filterUnits="userSpaceOnUse" x="-300" y="-300" width="2200" height="1600">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0019" numOctaves="4" seed="8" result="t"/>
+      <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="2" seed="5" result="grit"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="420" xChannelSelector="R" yChannelSelector="G" result="d1"/>
+      <feDisplacementMap in="d1" in2="grit" scale="9" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feColorMatrix in="d" values="0 0 0 0 0.4  0 0 0 0 0.39  0 0 0 0 0.37  1 0 0 0 0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.18 0.62 0.18 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/></feComponentTransfer>
+      <feGaussianBlur stdDeviation="0.5"/>
+    </filter>
+
+    <filter id="minor" filterUnits="userSpaceOnUse" x="-300" y="-300" width="2200" height="1600">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0032" numOctaves="4" seed="29" result="t"/>
+      <feTurbulence type="turbulence" baseFrequency="0.03" numOctaves="2" seed="2" result="grit"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="260" xChannelSelector="R" yChannelSelector="G" result="d1"/>
+      <feDisplacementMap in="d1" in2="grit" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feColorMatrix in="d" values="0 0 0 0 0.52  0 0 0 0 0.51  0 0 0 0 0.49  1 0 0 0 0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.34 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/></feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="#f3f1ec"/>
+  <rect width="1600" height="1000" filter="url(#clouds)"/>
+  <rect x="-300" y="-300" width="2200" height="1600" fill="url(#rampA)" filter="url(#haze)"/>
+  <rect x="-300" y="-300" width="2200" height="1600" fill="url(#rampB)" filter="url(#minor)"/>
+  <rect x="-300" y="-300" width="2200" height="1600" fill="url(#rampA)" filter="url(#major)"/>
+</svg>
