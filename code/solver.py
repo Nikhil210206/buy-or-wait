@@ -100,12 +100,14 @@ class Timeline:
         """Paying `amount` on day d, with nothing else changed."""
         if d < self.start or d > self.end:
             return False
-        i = self._idx_from(d)
-        if i > 0 and self.pre[i - 1] < self.floor - EPS:
+        # j is the last balance at or before d: the balance carried *through*
+        # day d, and so the first one the payment reduces. Taking the suffix
+        # minimum from the next flow day instead skips it, which made a payment
+        # on a quiet day just before payday look safe when it is not.
+        j = self._idx_from(d + dt.timedelta(days=1)) - 1
+        if j > 0 and self.pre[j - 1] < self.floor - EPS:
             return False
-        if i >= len(self.bal):
-            return True
-        return self.suf[i] - amount >= self.floor - EPS
+        return self.suf[j] - amount >= self.floor - EPS
 
     def safe_schedule(self, payments: list[tuple[dt.date, float]]) -> bool:
         """General case: re-run the window with the payments applied."""

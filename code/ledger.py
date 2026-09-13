@@ -49,6 +49,9 @@ DEAD_STATUSES = {"cancelled", "failed", "unrealized"}
 POOL_MODE = os.environ.get("BOW_POOL_MODE", "occurrence")
 POOL_MULT = float(os.environ.get("BOW_POOL_MULT", "1.0"))
 POOL_WINDOW = int(os.environ.get("BOW_POOL_WINDOW", "180"))
+# Whether a projected recurring item falling exactly on request_date is still to
+# be paid (1) or already reflected in current_available_balance (0).
+INCLUDE_ASOF = os.environ.get("BOW_INCLUDE_ASOF", "0") == "1"
 
 
 def _next_month(base: dt.date, anchor_day: int) -> dt.date:
@@ -388,7 +391,8 @@ class Ledger:
             if s.category == "salary" and adj.drop_unstable_income and not s.stable:
                 continue          # a payout that is still pending is not money yet
             amt = adj.reduce_series.get(s.event_id, s.amount)
-            for d in s.occurrences(as_of + dt.timedelta(days=1), end):
+            first = as_of if INCLUDE_ASOF else as_of + dt.timedelta(days=1)
+            for d in s.occurrences(first, end):
                 a = amt
                 for cat, factor, eff in adj.series_scale:
                     if cat == s.category and (eff is None or d >= eff):
