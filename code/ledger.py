@@ -17,6 +17,7 @@ at a weekly or fortnightly cadence within a `category`.
 from __future__ import annotations
 
 import datetime as dt
+import os
 import statistics as st
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
@@ -30,6 +31,17 @@ HORIZON_DAYS = 90
 POOLED_CATEGORIES = {"groceries", "transport", "dining", "shopping", "entertainment", "healthcare"}
 
 DEAD_STATUSES = {"cancelled", "failed", "unrealized"}
+
+# AGENTS.md: "Forecast essential variable spending conservatively." How much
+# conservatism is a calibration choice, so it is configurable and selected by
+# evaluation/calibrate.py against the solved samples rather than guessed.
+#   BOW_POOL_MODE  occurrence = per-occurrence mean x cadence
+#                  rate       = observed daily burn x cadence (robust to
+#                               cadence-estimation error)
+#   BOW_POOL_MULT  safety multiplier on the projected variable spend
+POOL_MODE = os.environ.get("BOW_POOL_MODE", "occurrence")
+POOL_MULT = float(os.environ.get("BOW_POOL_MULT", "1.0"))
+POOL_WINDOW = int(os.environ.get("BOW_POOL_WINDOW", "120"))
 
 
 @dataclass
@@ -83,6 +95,7 @@ class Adjustments:
     series_scale: list[tuple[str, float, dt.date | None]] = field(default_factory=list)  # (category, factor, effective)
     salary_primary_level: tuple[dt.date | None, float] | None = None   # confirmed base pay
     salary_only_primary: bool = False      # drop unconfirmed commission/gig streams
+    drop_unstable_income: bool = False     # pending gig/platform payouts are not money yet
     new_recurring: list[tuple[str, float, dt.date, int]] = field(default_factory=list)  # (category, amount, from, cadence)
     # spending changes under evaluation
     stop_series: set[str] = field(default_factory=set)                # event_ids
@@ -93,7 +106,8 @@ class Adjustments:
             set(self.drop_events), dict(self.amend_amount), dict(self.delay_event),
             list(self.extra_flows), list(self.salary_level), self.salary_stop_from,
             self.salary_next_override, list(self.series_scale),
-            self.salary_primary_level, self.salary_only_primary, list(self.new_recurring),
+            self.salary_primary_level, self.salary_only_primary, self.drop_unstable_income,
+            list(self.new_recurring),
             set(self.stop_series), dict(self.reduce_series),
         )
 
@@ -210,16 +224,23 @@ class Ledger:
             cad = round(st.median(gaps))
             if not (1 <= cad <= 21):
                 continue
-            recent = [e for e in evs if (as_of - e.cash_date).days <= 120] or evs[-8:]
+            recent = [e for e in evs if (as_of - e.cash_date).days <= POOL_WINDOW] or evs[-8:]
             amts = [self.home_amount(e) for e in recent]
             amts = [a for a in amts if a is not None]
             if not amts:
                 continue
             last = max(recent, key=lambda e: e.cash_date)
+            if POOL_MODE == "rate":
+                first = min(e.cash_date for e in recent)
+                days = max((last.cash_date - first).days, 1)
+                per_occurrence = sum(amts) / days * cad
+            else:
+                per_occurrence = st.mean(amts)
+            per_occurrence *= POOL_MULT
             out.append(Series(
                 key=f"{user_id}:{cat}:*pooled*", event_id=last.event_id, user_id=user_id,
                 category=cat, description=f"{cat} spending", direction=dirn,
-                amount=st.mean(amts), cadence_days=cad, last_date=dates[-1],
+                amount=per_occurrence, cadence_days=cad, last_date=dates[-1],
                 flexibility=_pool_flexibility(recent),
                 minimum_allowed_amount=_pool_min(recent), pooled=True,
             ))
@@ -324,6 +345,8 @@ class Ledger:
                 continue
             if s.category == "salary" and adj.salary_only_primary and s is not primary:
                 continue          # commission / gig income the employer has not confirmed
+            if s.category == "salary" and adj.drop_unstable_income and not s.stable:
+                continue          # a payout that is still pending is not money yet
             amt = adj.reduce_series.get(s.event_id, s.amount)
             for d in s.occurrences(as_of + dt.timedelta(days=1), end):
                 a = amt

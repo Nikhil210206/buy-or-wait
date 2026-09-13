@@ -86,11 +86,25 @@ class LLMError(RuntimeError):
     pass
 
 
+class QuotaExhausted(LLMError):
+    """The model's per-day free-tier allowance is gone. Rotate, do not retry."""
+
+
+class RateLimited(LLMError):
+    """Per-minute quota for this model. Rotating beats waiting out the window."""
+
+
+# The Gemini free tier meters GenerateRequestsPerDayPerProjectPerModel at 20 --
+# per *model*. Rotating over a pool of models therefore multiplies the daily
+# budget, and is far more effective than backing off on a single one.
+EXHAUSTED: set[str] = set()
+
+
 # The Gemini free tier allows only a handful of requests per minute, and a 429
 # there is a *per-minute* quota rather than transient load -- exponential
 # backoff in seconds never clears it. Pace calls instead, and wait out a full
 # window when one does land.
-MIN_INTERVAL = float(os.environ.get("GEMINI_MIN_INTERVAL", "13"))
+MIN_INTERVAL = float(os.environ.get("GEMINI_MIN_INTERVAL", "0.4"))
 RATE_LIMIT_WAIT = float(os.environ.get("GEMINI_RATE_LIMIT_WAIT", "62"))
 _last_call = 0.0
 
@@ -115,11 +129,14 @@ def _post(url: str, payload: dict, headers: dict, timeout: int = 120) -> dict:
             detail = e.read().decode()[:400]
             if e.code in (429, 500, 502, 503, 504):
                 last = LLMError(f"HTTP {e.code}: {detail}")
+                # An overloaded model clears faster by rotating to another one
+                # than by sitting out a backoff here.
+                if e.code in (500, 502, 503, 504) and attempt >= 1:
+                    raise last from e
                 if e.code == 429:
-                    m = re.search(r'"retryDelay":\s*"(\d+)s"', detail)
-                    delay = float(m.group(1)) + 2 if m else RATE_LIMIT_WAIT
-                    print(f"    rate limited; waiting {delay:.0f}s", flush=True)
-                    time.sleep(delay)
+                    if "PerDay" in detail:
+                        raise QuotaExhausted(detail[:200]) from e
+                    raise RateLimited(detail[:200]) from e
                 else:
                     time.sleep(2 ** attempt * 2)
                 continue
@@ -221,3 +238,33 @@ def pick(preferred: list[str], available: list[str]) -> str | None:
             if a == p or a.startswith(p):
                 return a
     return available[0] if available else None
+
+
+def gemini_any(prompt: str, *, models: list[str], purpose: str, image=None,
+               schema: dict | None = None, temperature: float = 0.0) -> tuple[str, str]:
+    """Call the first model in `models` with daily allowance left.
+
+    Returns (text, model_used). Raises QuotaExhausted only when the whole pool
+    is spent.
+    """
+    for sweep in range(3):
+        limited = 0
+        for m in models:
+            if m in EXHAUSTED:
+                continue
+            try:
+                return gemini(prompt, model=m, purpose=purpose, image=image,
+                              schema=schema, temperature=temperature), m
+            except QuotaExhausted:
+                EXHAUSTED.add(m)
+                print(f"    {m}: daily quota spent, rotating", flush=True)
+            except RateLimited:
+                limited += 1          # per-minute window; the next model is free
+            except LLMError as e:
+                print(f"    {m}: {str(e)[:110]}", flush=True)
+        if all(m in EXHAUSTED for m in models):
+            raise QuotaExhausted("every model in the pool has spent its daily quota")
+        if limited:
+            print(f"    whole pool rate-limited; waiting {RATE_LIMIT_WAIT:.0f}s", flush=True)
+            time.sleep(RATE_LIMIT_WAIT)
+    raise RateLimited("pool still rate-limited after 3 sweeps")

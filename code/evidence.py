@@ -199,7 +199,7 @@ def _json(text: str) -> dict:
 
 # ---------------------------------------------------------------- images
 
-def extract_images(ds: Dataset, model: str, *, refresh: bool = False) -> dict[str, dict]:
+def extract_images(ds: Dataset, models: list[str], *, refresh: bool = False) -> dict[str, dict]:
     path = CACHE / "images.json"
     out: dict[str, dict] = {}
     if path.exists() and not refresh:
@@ -213,11 +213,12 @@ def extract_images(ds: Dataset, model: str, *, refresh: bool = False) -> dict[st
             description=ev.description, category=ev.category, direction=ev.direction,
             currency=ev.currency, date=ev.event_date.isoformat())
         try:
-            raw = llm.gemini(prompt, model=model, purpose="image_amount",
-                             image=ref.path, schema=IMAGE_SCHEMA)
+            raw, used = llm.gemini_any(prompt, models=models, purpose="image_amount",
+                                       image=ref.path, schema=IMAGE_SCHEMA)
             d = _json(raw)
+            d["model"] = used
         except Exception as e:                       # noqa: BLE001
-            print(f"  image {ref.image_id}: {e}")
+            print(f"  image {ref.image_id}: {str(e)[:160]}", flush=True)
             continue
         d["image_id"] = ref.image_id
         d["event_id"] = ev.event_id
@@ -232,7 +233,7 @@ def extract_images(ds: Dataset, model: str, *, refresh: bool = False) -> dict[st
 
 # ---------------------------------------------------------------- messages
 
-def extract_messages(ds: Dataset, model: str, *, batch: int = 6,
+def extract_messages(ds: Dataset, models: list[str], *, batch: int = 6,
                      refresh: bool = False, provider: str = "gemini") -> dict[str, list[dict]]:
     path = CACHE / f"messages_{provider}.json"
     out: dict[str, list[dict]] = {}
@@ -260,13 +261,18 @@ def extract_messages(ds: Dataset, model: str, *, batch: int = 6,
         prompt = MESSAGE_PROMPT + "\n".join(block)
         try:
             if provider == "gemini":
-                raw = llm.gemini(prompt, model=model, purpose="message_directives", schema=SCHEMA)
+                raw, used = llm.gemini_any(prompt, models=models,
+                                           purpose="message_directives", schema=SCHEMA)
             else:
-                raw = llm.xai(prompt, model=model, purpose="message_directives")
+                raw, used = llm.xai(prompt, model=models[0],
+                                    purpose="message_directives"), models[0]
             data = _json(raw)
             got = {r["message_id"]: r.get("directives", []) for r in data.get("results", [])}
+        except llm.QuotaExhausted as e:
+            print(f"  stopping: {str(e)[:160]}", flush=True)
+            break
         except Exception as e:                       # noqa: BLE001
-            print(f"  batch {i//batch}: {e}")
+            print(f"  batch {i//batch}: {str(e)[:160]}", flush=True)
             continue
         missing = [m.message_id for m in chunk if m.message_id not in got]
         if missing:
@@ -276,7 +282,7 @@ def extract_messages(ds: Dataset, model: str, *, batch: int = 6,
                 continue          # leave uncached so a later pass retries it
             out[m.message_id] = [d for d in got.get(m.message_id, [])
                                  if d.get("kind") in KINDS]
-        print(f"  batch {i//batch + 1}/{(len(todo)+batch-1)//batch} ok", flush=True)
+        print(f"  batch {i//batch + 1}/{(len(todo)+batch-1)//batch} ok via {used}", flush=True)
         path.write_text(json.dumps(out, indent=2, ensure_ascii=False))
 
     path.write_text(json.dumps(out, indent=2, ensure_ascii=False))
@@ -397,8 +403,14 @@ class Evidence:
                             break
                 elif kind == "income_one_off" and amt and eff and eff > as_of:
                     adj.extra_flows.append(Flow(eff, amt, "known", f"msg:{m.message_id}", "salary"))
-                elif kind == "income_unconfirmed" and linked:
-                    adj.drop_events.add(linked)
+                elif kind == "income_unconfirmed":
+                    if linked:
+                        adj.drop_events.add(linked)
+                    else:
+                        # No single row to point at: the message is about a
+                        # payout stream that has not closed (gig platforms,
+                        # commissions, bonuses). Stop projecting variable income.
+                        adj.drop_unstable_income = True
                 elif kind == "recurring_expense_pct" and target and d.get("percent") is not None:
                     adj.series_scale.append((target, 1.0 + float(d["percent"]) / 100.0, eff))
                 elif kind == "new_recurring_expense" and amt and target:

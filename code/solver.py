@@ -144,13 +144,16 @@ def _eligible_changes(ds: Dataset, led: Ledger, req: Request) -> list[Change]:
         ev = ds.events_by_id.get(s.event_id)
         if ev is None or not ev.is_flexible or ev.category in prof.protected_categories:
             continue
-        if ev.can_stop and ev.category in prof.stoppable_categories:
-            out.append(Change(ev.event_id, "stop", None, ev.category, ev.description))
+        # Reducing is less disruptive than stopping, so it is offered first and
+        # _change_sets will try it first. request_21's official answer reduces a
+        # reducible_or_stoppable subscription rather than stopping it.
         if (ev.can_reduce and ev.category in prof.reducible_categories
                 and ev.minimum_allowed_amount is not None
                 and ev.amount is not None and ev.minimum_allowed_amount < ev.amount):
             out.append(Change(ev.event_id, "reduce_to", ev.minimum_allowed_amount,
                               ev.category, ev.description))
+        if ev.can_stop and ev.category in prof.stoppable_categories:
+            out.append(Change(ev.event_id, "stop", None, ev.category, ev.description))
     return out
 
 

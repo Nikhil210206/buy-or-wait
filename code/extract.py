@@ -14,8 +14,14 @@ import evidence  # noqa: E402
 import llm       # noqa: E402
 import loaders   # noqa: E402
 
-VISION_PREFS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]
-TEXT_PREFS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]
+# Free-tier quota is metered per model per day, so the extractor works through
+# a pool rather than a single choice. Stronger models first.
+POOL = [
+    "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash",
+    "gemini-flash-latest", "gemini-3-flash-preview",
+    "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest",
+    "gemini-3.1-flash-lite-preview",
+]
 GROK_PREFS = ["grok-4-fast", "grok-4", "grok-3"]
 
 
@@ -39,15 +45,14 @@ def main() -> int:
             return 1
         print(f"gemini models visible: {len(gem)}")
 
+    pool = [m for m in POOL if m in gem]
     if a.images:
-        model = llm.pick(VISION_PREFS, gem)
-        print(f"\n[images] model={model}")
-        evidence.extract_images(ds, model, refresh=a.refresh)
+        print(f"\n[images] pool={pool}")
+        evidence.extract_images(ds, pool, refresh=a.refresh)
 
     if a.messages:
-        model = llm.pick(TEXT_PREFS, gem)
-        print(f"\n[messages/gemini] model={model}")
-        evidence.extract_messages(ds, model, batch=a.batch, refresh=a.refresh, provider="gemini")
+        print(f"\n[messages/gemini] pool={pool}")
+        evidence.extract_messages(ds, pool, batch=a.batch, refresh=a.refresh, provider="gemini")
 
     if a.grok:
         xs = llm.xai_models()
@@ -56,7 +61,7 @@ def main() -> int:
         else:
             model = llm.pick(GROK_PREFS, xs)
             print(f"\n[messages/grok] model={model}")
-            evidence.extract_messages(ds, model, batch=a.batch, refresh=a.refresh, provider="grok")
+            evidence.extract_messages(ds, [model], batch=a.batch, refresh=a.refresh, provider="grok")
 
     llm.LEDGER.save(evidence.CACHE / "usage.json")
     n = len(llm.LEDGER.calls)
