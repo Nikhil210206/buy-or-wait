@@ -17,10 +17,17 @@ import loaders   # noqa: E402
 # Free-tier quota is metered per model per day, so the extractor works through
 # a pool rather than a single choice. Stronger models first.
 POOL = [
-    "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash",
-    "gemini-flash-latest", "gemini-3-flash-preview",
+    "gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest",
     "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest",
+    "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3-flash-preview",
     "gemini-3.1-flash-lite-preview",
+]
+# Vision calls carry a large payload, so latency dominates. Order this pool by
+# measured response time rather than by model strength.
+VISION_POOL = [
+    "gemini-3.6-flash", "gemini-3.1-flash-lite", "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest",
+    "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3-flash-preview",
 ]
 GROK_PREFS = ["grok-4-fast", "grok-4", "grok-3"]
 
@@ -46,9 +53,10 @@ def main() -> int:
         print(f"gemini models visible: {len(gem)}")
 
     pool = [m for m in POOL if m in gem]
+    vpool = [m for m in VISION_POOL if m in gem]
     if a.images:
-        print(f"\n[images] pool={pool}")
-        evidence.extract_images(ds, pool, refresh=a.refresh)
+        print(f"\n[images] pool={vpool}")
+        evidence.extract_images(ds, vpool, refresh=a.refresh)
 
     if a.messages:
         print(f"\n[messages/gemini] pool={pool}")

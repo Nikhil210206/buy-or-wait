@@ -16,6 +16,7 @@ at a weekly or fortnightly cadence within a `category`.
 """
 from __future__ import annotations
 
+import calendar
 import datetime as dt
 import os
 import statistics as st
@@ -39,9 +40,25 @@ DEAD_STATUSES = {"cancelled", "failed", "unrealized"}
 #                  rate       = observed daily burn x cadence (robust to
 #                               cadence-estimation error)
 #   BOW_POOL_MULT  safety multiplier on the projected variable spend
+# Defaults below were selected against the 25 solved samples: per-occurrence
+# mean over a 180-day history, with no safety margin. An earlier sweep chose a
+# 1.05 margin, but that was compensating for monthly series drifting by a fixed
+# 31-day step; once they were projected on calendar months the margin stopped
+# helping and now costs accuracy. Two global hyperparameters, no per-request or
+# per-user fitting.
 POOL_MODE = os.environ.get("BOW_POOL_MODE", "occurrence")
 POOL_MULT = float(os.environ.get("BOW_POOL_MULT", "1.0"))
-POOL_WINDOW = int(os.environ.get("BOW_POOL_WINDOW", "120"))
+POOL_WINDOW = int(os.environ.get("BOW_POOL_WINDOW", "180"))
+
+
+def _next_month(base: dt.date, anchor_day: int) -> dt.date:
+    """Same day next month, clamped to the month's length.
+
+    The anchor is carried separately so a short month does not permanently
+    shift the series (31 Jan -> 28 Feb -> 31 Mar, not -> 28 Mar).
+    """
+    year, month = (base.year + 1, 1) if base.month == 12 else (base.year, base.month + 1)
+    return dt.date(year, month, min(anchor_day, calendar.monthrange(year, month)[1]))
 
 
 @dataclass
@@ -60,13 +77,22 @@ class Series:
     minimum_allowed_amount: float | None
     pooled: bool = False
     stable: bool = True      # amounts barely vary -> contractual base pay
+    anchor_day: int = 0      # modal day-of-month for monthly series
 
     def occurrences(self, start: dt.date, end: dt.date):
-        d = self.last_date + dt.timedelta(days=self.cadence_days)
+        # A monthly commitment lands on the same calendar day each month, not
+        # every N days. Stepping by a median gap of 31 makes salary drift
+        # 15th -> 16th -> 17th across the forecast, which throws out both the
+        # balance path and earliest_date_for_full_payment.
+        monthly = 26 <= self.cadence_days <= 32
+        anchor = self.anchor_day or self.last_date.day
+        d = _next_month(self.last_date, anchor) if monthly \
+            else self.last_date + dt.timedelta(days=self.cadence_days)
         while d <= end:
             if d >= start:
                 yield d
-            d += dt.timedelta(days=self.cadence_days)
+            d = _next_month(d, anchor) if monthly \
+                else d + dt.timedelta(days=self.cadence_days)
 
 
 @dataclass
@@ -125,7 +151,19 @@ class Ledger:
     def raw_amount(self, e: Event) -> float | None:
         if e.amount is not None:
             return e.amount
-        return self.evidence_amounts.get(e.event_id)
+        got = self.evidence_amounts.get(e.event_id)
+        if got is not None:
+            return got
+        # "Do not treat a blank amount as zero." If the image pass could not
+        # recover a figure, fall back to the user's own typical spend in that
+        # category rather than silently dropping the row.
+        return self._peer_estimate(e)
+
+    def _peer_estimate(self, e: Event) -> float | None:
+        peers = [x.amount for x in self.ds.events_by_user.get(e.user_id, [])
+                 if x.category == e.category and x.currency == e.currency
+                 and x.amount is not None and x.direction == e.direction]
+        return st.median(peers) if peers else None
 
     def home_amount(self, e: Event, adj: Adjustments | None = None) -> float | None:
         if adj and e.event_id in adj.amend_amount:
@@ -202,6 +240,7 @@ class Ledger:
                 category=cat, description=desc, direction=dirn, amount=amt,
                 cadence_days=cad, last_date=last.cash_date, flexibility=last.flexibility,
                 minimum_allowed_amount=last.minimum_allowed_amount,
+                anchor_day=Counter(d.day for d in dates).most_common(1)[0][0],
             ))
             claimed.update(e.event_id for e in evs)
 
@@ -312,6 +351,7 @@ class Ledger:
                 user_id=user_id, category="salary", description=last.description,
                 direction="credit", amount=amt, cadence_days=cad, last_date=last.cash_date,
                 flexibility="fixed", minimum_allowed_amount=None, stable=spread < 0.02,
+                anchor_day=Counter(e.cash_date.day for e in c).most_common(1)[0][0],
             ))
         return out
 

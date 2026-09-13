@@ -16,10 +16,18 @@ Python 3.11+. No third-party packages — the model clients are plain `urllib`.
 `code/cache/` is populated; the solver never calls a model.
 
 ```bash
-python3 code/evaluation/score.py             # score against the 25 solved samples
+python3 code/evaluation/selftest.py          # invariants: formatting, calendar stepping, FX, guard
 python3 code/evaluation/score.py --check-gt  # verify our contract reading vs ground truth
+python3 code/evaluation/score.py             # score against the 25 solved samples
+python3 code/evaluation/ablate.py            # which evidence source moves which sample
+python3 code/evaluation/calibrate.py         # re-select the variable-spend estimator
 python3 code/evaluation/report.py            # regenerate evaluation/usage_report.md
 ```
+
+`code/cache/` holds the extracted evidence (image amounts, message directives)
+and the token ledger. It is model *output*, not answers: regenerate it any time
+with `code/extract.py --refresh`. It ships in `code.zip` so the solution runs
+and reproduces `output.csv` without an API key.
 
 ## Approach
 
@@ -115,9 +123,13 @@ code/
   llm.py         Gemini / xAI clients + token ledger
   extract.py     runs and caches the evidence passes
   evaluation/
+    selftest.py  invariant checks
     score.py     self-scoring against sample_requests.csv
+    ablate.py    per-evidence-source ablation
+    calibrate.py hyperparameter selection
     report.py    generates usage_report.md
     usage_report.md
+  cache/         extracted evidence + token ledger (regenerable)
 ```
 
 No secrets are committed; keys are read from `.env` (gitignored) or the

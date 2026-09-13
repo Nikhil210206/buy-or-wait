@@ -25,13 +25,6 @@ def longdate(d: dt.date) -> str:
     return f"{d.day} {MONTHS[d.month]} {d.year}"
 
 
-def _phrase(c) -> str:
-    what = f"the {c.description.lower()}"
-    if c.kind == "stop":
-        return f"Stop {what}"
-    return f"reduce {what} to {{AMT}}"
-
-
 def _changes_sentence(cur: str, changes) -> str:
     parts = []
     for i, c in enumerate(changes):

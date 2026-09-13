@@ -145,8 +145,9 @@ def _eligible_changes(ds: Dataset, led: Ledger, req: Request) -> list[Change]:
         if ev is None or not ev.is_flexible or ev.category in prof.protected_categories:
             continue
         # Reducing is less disruptive than stopping, so it is offered first and
-        # _change_sets will try it first. request_21's official answer reduces a
-        # reducible_or_stoppable subscription rather than stopping it.
+        # _change_sets will try it first. The solved samples back this up: where a
+        # subscription is both reducible and stoppable, the official answer reduces
+        # it rather than stopping it.
         if (ev.can_reduce and ev.category in prof.reducible_categories
                 and ev.minimum_allowed_amount is not None
                 and ev.amount is not None and ev.minimum_allowed_amount < ev.amount):
@@ -213,6 +214,11 @@ def solve(ds: Dataset, led: Ledger, req: Request, base_adj: Adjustments | None =
 
     def consider(method: str, payments: list[tuple[dt.date, float]], total: float,
                  option: PaymentOption | None, *, allow_changes: bool = True) -> None:
+        # "The plan must complete the request by desired_completion_date." This is
+        # a hard requirement, not a preference: no official sample answer contains
+        # a plan whose last payment falls after the deadline.
+        if req.desired_completion_date and payments and payments[-1][0] > req.desired_completion_date:
+            return
         if tl.safe_schedule(payments):
             candidates.append(Candidate(method, payments, total, (), option))
             return

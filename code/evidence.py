@@ -225,6 +225,7 @@ def extract_images(ds: Dataset, models: list[str], *, refresh: bool = False) -> 
         d["event_currency"] = ev.currency
         out[ev.event_id] = d
         path.write_text(json.dumps(out, indent=2))      # checkpoint after every image
+        llm.LEDGER.save(CACHE / "usage.json")
         print(f"  {ref.image_id} -> {ev.event_id}: {d.get('total_amount')} "
               f"{d.get('currency')} ({d.get('confidence')})", flush=True)
     path.write_text(json.dumps(out, indent=2))
@@ -282,6 +283,7 @@ def extract_messages(ds: Dataset, models: list[str], *, batch: int = 6,
                 continue          # leave uncached so a later pass retries it
             out[m.message_id] = [d for d in got.get(m.message_id, [])
                                  if d.get("kind") in KINDS]
+        llm.LEDGER.save(CACHE / "usage.json")
         print(f"  batch {i//batch + 1}/{(len(todo)+batch-1)//batch} ok via {used}", flush=True)
         path.write_text(json.dumps(out, indent=2, ensure_ascii=False))
 

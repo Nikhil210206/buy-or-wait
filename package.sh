@@ -15,8 +15,6 @@ if [[ ! -s code/evaluation/usage_report.md ]]; then
   exit 1
 fi
 
-if [[ -f .env ]] && zip -sf /dev/null 2>/dev/null; then :; fi
-
 zip -r code.zip code README.md \
   -x '*/__pycache__/*' '*.pyc' '*/.venv/*' '*/node_modules/*' \
      'code/cache/usage.json.bak' '*.DS_Store' >/dev/null
@@ -29,4 +27,4 @@ if unzip -l code.zip | grep -qiE '\.env($|[^.])'; then
 fi
 
 echo "built code.zip ($(du -h code.zip | cut -f1))"
-unzip -l code.zip | tail -n +4 | head -n -2 | awk '{print "  " $4}' | sed '/^  $/d'
+unzip -l code.zip | awk 'NR>3 && NF==4 && $4 != "" {print "  " $4}'

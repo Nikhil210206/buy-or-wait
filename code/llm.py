@@ -117,7 +117,7 @@ def _throttle() -> None:
     _last_call = time.time()
 
 
-def _post(url: str, payload: dict, headers: dict, timeout: int = 120) -> dict:
+def _post(url: str, payload: dict, headers: dict, timeout: int = 45) -> dict:
     body = json.dumps(payload).encode()
     req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json", **headers})
     last: Exception | None = None
